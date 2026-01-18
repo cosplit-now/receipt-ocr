@@ -1,17 +1,17 @@
-import type { ImageInput, ExtractOptions, ReceiptItem, VerificationContext } from './types.js';
+import type { ImageInput, ExtractOptions, ReceiptItem, ReceiptData, VerificationContext } from './types.js';
 import { callGemini } from './adapters/gemini.js';
 import { batchVerifyItems } from './adapters/verifier.js';
 import { EXTRACTION_PROMPT } from './utils/prompt.js';
 import { parseResponse } from './processors/parser.js';
 
 /**
- * 从小票图片中提取商品数据
+ * 从小票图片中提取商品数据和总金额
  * 
  * 这是一个无状态的异步函数，每次调用独立执行。
  * 
  * @param image - 图片输入（Buffer、base64 字符串或 URL）
  * @param options - 可选配置（包括验证回调）
- * @returns 商品列表
+ * @returns 小票数据（包含商品列表和总金额）
  * 
  * @throws 如果环境变量 GEMINI_API_KEY 未设置
  * @throws 如果 API 调用失败
@@ -20,15 +20,17 @@ import { parseResponse } from './processors/parser.js';
  * @example
  * ```typescript
  * // 基础用法
- * const items = await extractReceiptItems(imageBuffer);
+ * const receipt = await extractReceiptItems(imageBuffer);
+ * console.log(receipt.items);  // 商品列表
+ * console.log(receipt.total);  // 总金额
  * 
  * // 使用自动验证（Google Search）
- * const items = await extractReceiptItems(imageBuffer, {
+ * const receipt = await extractReceiptItems(imageBuffer, {
  *   autoVerify: true
  * });
  * 
  * // 带自定义验证回调
- * const items = await extractReceiptItems(imageBuffer, {
+ * const receipt = await extractReceiptItems(imageBuffer, {
  *   verifyCallback: async (name, context) => {
  *     const result = await myProductSearch(name);
  *     return result ? { verifiedName: result.name } : null;
@@ -39,12 +41,12 @@ import { parseResponse } from './processors/parser.js';
 export async function extractReceiptItems(
   image: ImageInput,
   options?: ExtractOptions
-): Promise<ReceiptItem[]> {
+): Promise<ReceiptData> {
   // 1. 调用 Gemini API
   const responseText = await callGemini(image, EXTRACTION_PROMPT);
 
   // 2. 解析响应
-  const parsedItems = parseResponse(responseText);
+  const { items: parsedItems, total } = parseResponse(responseText);
 
   // 3. 处理需要验证的商品
   const itemsNeedingVerification = parsedItems.filter(item => item.needsVerification);
@@ -101,5 +103,8 @@ export async function extractReceiptItems(
   // 4. 转换为公开类型：移除内部字段 needsVerification
   const finalItems: ReceiptItem[] = parsedItems.map(({ needsVerification, ...item }) => item);
 
-  return finalItems;
+  return {
+    items: finalItems,
+    total,
+  };
 }

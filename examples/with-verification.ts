@@ -55,12 +55,12 @@ async function main() {
     const imageBuffer = fs.readFileSync(imagePath);
     
     // 使用验证回调
-    const items = await extractReceiptItems(imageBuffer, {
+    const receipt = await extractReceiptItems(imageBuffer, {
       verifyCallback,
     });
     
-    console.log(`\n\n最终提取到 ${items.length} 个商品：`);
-    items.forEach((item, index) => {
+    console.log(`\n\n最终提取到 ${receipt.items.length} 个商品：`);
+    receipt.items.forEach((item, index) => {
       console.log(`\n${index + 1}. ${item.name}`);
       console.log(`   价格: ¥${item.price}`);
       console.log(`   数量: ${item.quantity}`);
@@ -73,6 +73,7 @@ async function main() {
       }
     });
     
+    console.log(`\n总金额: ¥${receipt.total}`);
     console.log(`\n✓ 所有商品已提取并验证完成`);
     
   } catch (error) {

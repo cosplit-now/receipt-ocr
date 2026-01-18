@@ -1,6 +1,5 @@
 /**
  * 对外公开的商品数据结构
- * 这是 extractReceiptItems 函数返回的类型
  */
 export interface ReceiptItem {
   /** 商品名称 */
@@ -17,6 +16,17 @@ export interface ReceiptItem {
   deposit?: number;
   /** 折扣金额（可选，负数表示折扣） */
   discount?: number;
+}
+
+/**
+ * 小票数据结构
+ * 这是 extractReceiptItems 函数返回的类型
+ */
+export interface ReceiptData {
+  /** 商品列表 */
+  items: ReceiptItem[];
+  /** 小票总金额 */
+  total: number;
 }
 
 /**

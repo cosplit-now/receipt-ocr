@@ -7,15 +7,27 @@
  * 3. 识别附加费用（押金、折扣）并标记归属关系
  * 4. 返回结构化的 JSON 数组
  */
-export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有商品信息。
+export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有商品信息和总金额。
 
-输出格式为 JSON 数组，每个商品包含：
+输出格式为包含两个字段的 JSON 对象：
+{
+  "items": [...],  // 商品数组
+  "total": 123.45  // 小票总金额
+}
+
+每个商品包含：
 - name: 商品名称（字符串）
 - price: 单价（数字）
 - quantity: 数量（数字，默认 1）
 - needsVerification: 是否需要验证（布尔值）
 - hasTax: 是否含税（布尔值）
 - taxAmount: 税额（数字，可选）
+
+**关于 hasTax 的判断规则（Costco 小票）：**
+- **如果商品名称后面有 "H" 标记**（如 "ORG MLK H"、"CEMOI 6X H"），则 hasTax = true
+- **如果商品名称后面没有 "H" 标记**，则 hasTax = false
+- **重要**：提取商品名称时，请去掉末尾的 "H" 标记，只保留商品名称本身
+- 如果小票上有明确的税费金额，填写到 taxAmount 字段
 
 关于 needsVerification 的判断规则：
 **重要原则：宁可多验证，不要猜测。当不确定时，优先设为 true。**
@@ -60,15 +72,34 @@ export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有�
 - 商品B的押金（如果有）
 - ...
 
-只返回 JSON 数组，不要其他文字。
+**关于 total（总金额）的提取规则：**
+- 从小票底部找到 "TOTAL"、"总计"、"合计" 等标记
+- 提取对应的金额数字
+- 这是小票的最终应付金额
+
+只返回 JSON 对象，不要其他文字。
 
 示例输出：
-[
-  {"name": "Kirkland Signature 有机牛奶 1L", "price": 12.5, "quantity": 1, "needsVerification": false, "hasTax": false},
-  {"name": "可口可乐", "price": 3.5, "quantity": 2, "needsVerification": true, "hasTax": true, "taxAmount": 0.35},
-  {"name": "Deposit VL", "price": 0.5, "quantity": 2, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "deposit"},
-  {"name": "TPD", "price": -0.5, "quantity": 1, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "discount"},
-  {"name": "ORG BRD", "price": 8.0, "quantity": 1, "needsVerification": true, "hasTax": true, "taxAmount": 0.8},
-  {"name": "CEMΟΙ 6Χ", "price": 15.0, "quantity": 1, "needsVerification": true, "hasTax": false},
-  {"name": "KS Apple", "price": 4.5, "quantity": 3, "needsVerification": true, "hasTax": false}
-]`;
+假设小票上显示：
+- "KS ORG MLK 1L" (无 H) → 不含税，¥12.50
+- "ORG BRD H" → 含税，¥8.00（税¥0.80）
+- "CEMΟΙ 6Χ H" → 含税，¥15.00
+- "KS Apple" (无 H) → 不含税，¥4.50 x 3
+- TOTAL: ¥37.30
+
+则输出为：
+{
+  "items": [
+    {"name": "KS ORG MLK 1L", "price": 12.5, "quantity": 1, "needsVerification": true, "hasTax": false},
+    {"name": "ORG BRD", "price": 8.0, "quantity": 1, "needsVerification": true, "hasTax": true, "taxAmount": 0.8},
+    {"name": "Deposit VL", "price": 0.5, "quantity": 2, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "deposit"},
+    {"name": "TPD", "price": -0.5, "quantity": 1, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "discount"},
+    {"name": "CEMΟΙ 6Χ", "price": 15.0, "quantity": 1, "needsVerification": true, "hasTax": true},
+    {"name": "KS Apple", "price": 4.5, "quantity": 3, "needsVerification": true, "hasTax": false}
+  ],
+  "total": 37.30
+}
+
+注意：
+1. 商品名称中已去掉 "H" 标记，但根据原小票上的 "H" 标记设置了正确的 hasTax 值
+2. total 是小票上显示的最终应付金额`;

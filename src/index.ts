@@ -16,6 +16,7 @@ export { batchVerifyItems } from './adapters/verifier.js';
 // 导出所有类型定义
 export type {
   ReceiptItem,
+  ReceiptData,
   ImageInput,
   ExtractOptions,
   VerificationStrategy,

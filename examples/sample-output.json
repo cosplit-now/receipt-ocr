@@ -1,39 +1,42 @@
-[
-  {
-    "name": "有机牛奶 1L",
-    "price": 12.5,
-    "quantity": 1,
-    "hasTax": false
-  },
-  {
-    "name": "可口可乐瓶装 330ml",
-    "price": 3.5,
-    "quantity": 2,
-    "hasTax": true,
-    "taxAmount": 0.35,
-    "deposit": 1.0,
-    "discount": -0.5
-  },
-  {
-    "name": "有机面包",
-    "price": 8.0,
-    "quantity": 1,
-    "hasTax": true,
-    "taxAmount": 0.8
-  },
-  {
-    "name": "啤酒 500ml",
-    "price": 6.5,
-    "quantity": 6,
-    "hasTax": true,
-    "taxAmount": 1.95,
-    "deposit": 3.0
-  },
-  {
-    "name": "有机苹果",
-    "price": 4.2,
-    "quantity": 1,
-    "hasTax": false,
-    "discount": -0.8
-  }
-]
+{
+  "items": [
+    {
+      "name": "有机牛奶 1L",
+      "price": 12.5,
+      "quantity": 1,
+      "hasTax": false
+    },
+    {
+      "name": "可口可乐瓶装 330ml",
+      "price": 3.5,
+      "quantity": 2,
+      "hasTax": true,
+      "taxAmount": 0.35,
+      "deposit": 1.0,
+      "discount": -0.5
+    },
+    {
+      "name": "有机面包",
+      "price": 8.0,
+      "quantity": 1,
+      "hasTax": true,
+      "taxAmount": 0.8
+    },
+    {
+      "name": "啤酒 500ml",
+      "price": 6.5,
+      "quantity": 6,
+      "hasTax": true,
+      "taxAmount": 1.95,
+      "deposit": 3.0
+    },
+    {
+      "name": "有机苹果",
+      "price": 4.2,
+      "quantity": 1,
+      "hasTax": false,
+      "discount": -0.8
+    }
+  ],
+  "total": 95.75
+}

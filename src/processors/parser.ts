@@ -116,13 +116,21 @@ function mergeAttachments(items: RawReceiptItem[]): RawReceiptItem[] {
 }
 
 /**
- * 解析 LLM 返回的 JSON 响应为内部商品数组
+ * 解析结果接口
+ */
+export interface ParsedReceiptData {
+  items: InternalReceiptItem[];
+  total: number;
+}
+
+/**
+ * 解析 LLM 返回的 JSON 响应
  * 
  * @param responseText - LLM 返回的文本响应
- * @returns 解析后的商品数组（包含 needsVerification 内部字段）
+ * @returns 解析后的小票数据（包含商品数组和总金额）
  * @throws 如果解析失败
  */
-export function parseResponse(responseText: string): InternalReceiptItem[] {
+export function parseResponse(responseText: string): ParsedReceiptData {
   try {
     // 提取 JSON
     const jsonText = extractJson(responseText);
@@ -130,13 +138,23 @@ export function parseResponse(responseText: string): InternalReceiptItem[] {
     // 解析 JSON
     const parsed = JSON.parse(jsonText);
 
-    // 确保是数组
-    if (!Array.isArray(parsed)) {
-      throw new Error('Response is not an array');
+    // 验证响应格式
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Response is not an object');
+    }
+
+    // 提取 items 数组
+    if (!Array.isArray(parsed.items)) {
+      throw new Error('Response.items is not an array');
+    }
+
+    // 提取 total
+    if (typeof parsed.total !== 'number' || parsed.total < 0) {
+      throw new Error('Response.total is missing or invalid');
     }
 
     // 验证并规范化每个商品
-    const items = parsed.map((raw, index) => {
+    const items = parsed.items.map((raw: any, index: number) => {
       try {
         return normalizeRawItem(raw);
       } catch (error) {
@@ -148,7 +166,10 @@ export function parseResponse(responseText: string): InternalReceiptItem[] {
     // 合并附加费用到对应的商品
     const mergedItems = mergeAttachments(items);
 
-    return mergedItems;
+    return {
+      items: mergedItems,
+      total: parsed.total,
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to parse LLM response: ${error.message}\n\nResponse:\n${responseText}`);

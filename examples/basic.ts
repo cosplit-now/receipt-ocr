@@ -16,10 +16,10 @@ async function main() {
     const imagePath = path.join(__dirname, 'sample-receipt.jpg');
     const imageBuffer = fs.readFileSync(imagePath);
     
-    const items = await extractReceiptItems(imageBuffer);
+    const receipt = await extractReceiptItems(imageBuffer);
     
-    console.log(`\n提取到 ${items.length} 个商品：`);
-    items.forEach((item, index) => {
+    console.log(`\n提取到 ${receipt.items.length} 个商品：`);
+    receipt.items.forEach((item, index) => {
       console.log(`\n${index + 1}. ${item.name}`);
       console.log(`   价格: ¥${item.price}`);
       console.log(`   数量: ${item.quantity}`);
@@ -34,6 +34,8 @@ async function main() {
         console.log(`   折扣: ¥${item.discount}`);
       }
     });
+    
+    console.log(`\n总金额: ¥${receipt.total}`);
   } catch (error) {
     console.error('提取失败:', error);
   }

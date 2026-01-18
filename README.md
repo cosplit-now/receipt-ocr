@@ -39,31 +39,45 @@ import fs from 'fs';
 // 从文件读取图片
 const imageBuffer = fs.readFileSync('receipt.jpg');
 
-// 提取商品信息
-const items = await extractReceiptItems(imageBuffer);
+// 提取商品信息和总金额
+const receipt = await extractReceiptItems(imageBuffer);
 
-console.log(items);
-// [
-//   {
-//     name: "有机牛奶 1L",
-//     price: 12.5,
-//     quantity: 1,
-//     hasTax: false
-//   },
-//   {
-//     name: "可口可乐瓶装",
-//     price: 3.5,
-//     quantity: 2,
-//     hasTax: true,
-//     taxAmount: 0.35,
-//     deposit: 0.5,      // 押金已自动合并
-//     discount: -0.5     // 折扣已自动合并
-//   },
-//   ...
-// ]
+console.log(receipt);
+// {
+//   items: [
+//     {
+//       name: "有机牛奶 1L",
+//       price: 12.5,
+//       quantity: 1,
+//       hasTax: false
+//     },
+//     {
+//       name: "可口可乐瓶装",
+//       price: 3.5,
+//       quantity: 2,
+//       hasTax: true,
+//       taxAmount: 0.35,
+//       deposit: 0.5,      // 押金已自动合并
+//       discount: -0.5     // 折扣已自动合并
+//     },
+//     ...
+//   ],
+//   total: 95.75
+// }
 ```
 
-## 商品数据结构
+## 数据结构
+
+### 小票数据
+
+```typescript
+interface ReceiptData {
+  items: ReceiptItem[];          // 商品列表
+  total: number;                 // 小票总金额
+}
+```
+
+### 商品数据
 
 每个商品包含以下字段：
 
@@ -97,9 +111,12 @@ interface ReceiptItem {
 ```typescript
 import { extractReceiptItems } from 'receipt-ocr';
 
-const items = await extractReceiptItems(imageBuffer, {
+const receipt = await extractReceiptItems(imageBuffer, {
   autoVerify: true, // 启用自动验证
 });
+
+console.log(receipt.items);  // 商品列表
+console.log(receipt.total);  // 总金额
 
 // 库会自动验证并补全模糊的商品名称
 // 如果验证失败，会保持原始名称
@@ -120,7 +137,7 @@ const items = await extractReceiptItems(imageBuffer, {
 ```typescript
 import { extractReceiptItems } from 'receipt-ocr';
 
-const items = await extractReceiptItems(imageBuffer, {
+const receipt = await extractReceiptItems(imageBuffer, {
   verifyCallback: async (name, context) => {
     // 调用外部搜索服务验证/补全商品名称
     const result = await myProductDatabase.search(name);
@@ -140,7 +157,7 @@ const items = await extractReceiptItems(imageBuffer, {
 两种验证方式可以同时使用：
 
 ```typescript
-const items = await extractReceiptItems(imageBuffer, {
+const receipt = await extractReceiptItems(imageBuffer, {
   autoVerify: true,           // 先用 Google Search 批量验证
   verifyCallback: async (name, context) => {
     // 如果自动验证失败，再用自定义逻辑
@@ -150,16 +167,30 @@ const items = await extractReceiptItems(imageBuffer, {
 });
 ```
 
-验证回调接口：
+### 验证回调接口
 
 ```typescript
 type VerificationCallback = (
   name: string,
   context: {
     rawText: string;           // OCR 原始文本
-    allItems: ReceiptItem[];   // 所有已解析商品
+    allItems: ReceiptItem[];   // 所有已解析商品（不含 total）
   }
 ) => Promise<{ verifiedName: string } | null>;
+```
+
+### 访问总金额
+
+```typescript
+const receipt = await extractReceiptItems(imageBuffer);
+
+// 访问商品列表
+receipt.items.forEach(item => {
+  console.log(`${item.name}: ¥${item.price} × ${item.quantity}`);
+});
+
+// 访问总金额
+console.log(`总计: ¥${receipt.total}`);
 ```
 
 ## 图片输入格式
