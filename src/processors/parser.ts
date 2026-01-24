@@ -95,8 +95,8 @@ function mergeAttachments(items: RawReceiptItem[]): RawReceiptItem[] {
           // 押金：累加（考虑数量）
           currentItem.deposit = (currentItem.deposit || 0) + (item.price * item.quantity);
         } else if (item.attachmentType === 'discount') {
-          // 折扣：累加（通常已经是负数）
-          currentItem.discount = (currentItem.discount || 0) + item.price;
+          // 折扣：LLM 输出正数，我们转为负数累加
+          currentItem.discount = (currentItem.discount || 0) - item.price;
         }
       }
       // 如果没有前置商品，跳过这个孤立的附加费用

@@ -60,6 +60,10 @@ export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有�
 对于押金（Deposit、deposit、押金等）和折扣（TPD、discount、折扣等）这类附加费用：
 - 添加额外字段 isAttachment: true
 - 添加 attachmentType: "deposit" 或 "discount"
+- **价格格式要求**：
+  - 押金的 price 字段必须是**正数**（如 0.5）
+  - 折扣的 price 字段也必须是**正数**（如 0.5，而不是 -0.5）
+  - 系统会自动将折扣金额处理为负值，你只需输出折扣的绝对值
 - **重要**：将附加费用紧跟在它所属的商品后面排列
 - 系统会自动将附加费用合并到它前面的商品中
 - 这些附加费用不会作为独立商品返回
@@ -77,7 +81,11 @@ export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有�
 - 提取对应的金额数字
 - 这是小票的最终应付金额
 
-只返回 JSON 对象，不要其他文字。
+**输出格式要求（极其重要）**：
+1. 只返回 JSON 对象，不要任何其他文字、解释或markdown标记
+2. 所有 price 字段必须是**正数**，包括折扣项
+3. 严格遵循上述字段定义，不要添加额外字段
+4. 确保 JSON 格式正确，可以被直接解析
 
 示例输出：
 假设小票上显示：
@@ -93,7 +101,7 @@ export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有�
     {"name": "KS ORG MLK 1L", "price": 12.5, "quantity": 1, "needsVerification": true, "hasTax": false},
     {"name": "ORG BRD", "price": 8.0, "quantity": 1, "needsVerification": true, "hasTax": true, "taxAmount": 0.8},
     {"name": "Deposit VL", "price": 0.5, "quantity": 2, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "deposit"},
-    {"name": "TPD", "price": -0.5, "quantity": 1, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "discount"},
+    {"name": "TPD", "price": 0.5, "quantity": 1, "needsVerification": false, "hasTax": false, "isAttachment": true, "attachmentType": "discount"},
     {"name": "CEMΟΙ 6Χ", "price": 15.0, "quantity": 1, "needsVerification": true, "hasTax": true},
     {"name": "KS Apple", "price": 4.5, "quantity": 3, "needsVerification": true, "hasTax": false}
   ],
@@ -102,4 +110,6 @@ export const EXTRACTION_PROMPT = `分析这张购物小票图片，提取所有�
 
 注意：
 1. 商品名称中已去掉 "H" 标记，但根据原小票上的 "H" 标记设置了正确的 hasTax 值
-2. total 是小票上显示的最终应付金额`;
+2. TPD 折扣项的 price 是**正数 0.5**（不是 -0.5），系统会自动处理为负值
+3. 所有附加费用（押金、折扣）的 price 都必须是正数
+4. total 是小票上显示的最终应付金额`;
