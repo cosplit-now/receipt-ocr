@@ -97,7 +97,7 @@ export interface ExtractOptions {
   
   /**
    * 自动使用 Google Search 验证不确定的商品名称
-   * 默认 false
+   * 默认 true
    */
   autoVerify?: boolean;
 }

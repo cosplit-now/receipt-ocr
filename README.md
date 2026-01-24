@@ -39,7 +39,7 @@ import fs from 'fs';
 // 从文件读取图片
 const imageBuffer = fs.readFileSync('receipt.jpg');
 
-// 提取商品信息和总金额
+// 提取商品信息和总金额（默认启用自动验证）
 const receipt = await extractReceiptItems(imageBuffer);
 
 console.log(receipt);
@@ -104,15 +104,19 @@ interface ReceiptItem {
 
 ## 高级用法
 
-### 1. 自动验证（推荐）
+### 1. 自动验证（默认启用）
 
-使用 Google Search grounding 自动批量验证不确定的商品名称：
+库默认使用 Google Search grounding 自动批量验证不确定的商品名称：
 
 ```typescript
 import { extractReceiptItems } from 'receipt-ocr';
 
-const receipt = await extractReceiptItems(imageBuffer, {
-  autoVerify: true, // 启用自动验证
+// 默认启用自动验证
+const receipt = await extractReceiptItems(imageBuffer);
+
+// 如需禁用自动验证，显式设置为 false
+const receiptWithoutVerify = await extractReceiptItems(imageBuffer, {
+  autoVerify: false, // 禁用自动验证
 });
 
 console.log(receipt.items);  // 商品列表
@@ -154,11 +158,11 @@ const receipt = await extractReceiptItems(imageBuffer, {
 
 ### 3. 组合使用
 
-两种验证方式可以同时使用：
+两种验证方式可以同时使用（自动验证默认启用）：
 
 ```typescript
 const receipt = await extractReceiptItems(imageBuffer, {
-  autoVerify: true,           // 先用 Google Search 批量验证
+  // autoVerify 默认为 true，会先用 Google Search 批量验证
   verifyCallback: async (name, context) => {
     // 如果自动验证失败，再用自定义逻辑
     const result = await myProductDatabase.search(name);

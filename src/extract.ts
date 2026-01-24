@@ -24,9 +24,12 @@ import { parseResponse } from './processors/parser.js';
  * console.log(receipt.items);  // 商品列表
  * console.log(receipt.total);  // 总金额
  * 
- * // 使用自动验证（Google Search）
+ * // 使用自动验证（默认已启用）
+ * const receipt = await extractReceiptItems(imageBuffer);
+ * 
+ * // 禁用自动验证
  * const receipt = await extractReceiptItems(imageBuffer, {
- *   autoVerify: true
+ *   autoVerify: false
  * });
  * 
  * // 带自定义验证回调
@@ -52,7 +55,8 @@ export async function extractReceiptItems(
   const itemsNeedingVerification = parsedItems.filter(item => item.needsVerification);
   
   // 3a. 自动验证（使用 Google Search grounding）
-  if (options?.autoVerify && itemsNeedingVerification.length > 0) {
+  // 默认启用，除非显式设置为 false
+  if (options?.autoVerify !== false && itemsNeedingVerification.length > 0) {
     try {
       const verificationMap = await batchVerifyItems(itemsNeedingVerification);
       
